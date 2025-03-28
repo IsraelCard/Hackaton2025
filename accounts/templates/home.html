@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Dispositivos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            gap: 20px;
+            height: 100vh;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .sidebar {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+        }
+        .device-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .device-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .graph-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .badge {
+            font-weight: 500;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Panel izquierdo - Perfil -->
+        <div class="sidebar">
+            <div class="profile-section mb-4 text-center">
+                <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=random&size=100" 
+                     alt="Avatar" class="rounded-circle mb-3">
+                <h4>{{ user.username }}</h4>
+                <p class="text-muted">Bienvenido a tu panel</p>
+            </div>
+            
+            <div class="actions-section">
+                <button class="btn btn-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#geminiModal">
+                    <i class="bi bi-chat-left-text"></i> Chat con Gemini
+                </button>
+                <a href="{% url 'logout' %}" class="btn btn-outline-danger w-100">
+                    <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                </a>
+            </div>
+        </div>
+
+        <!-- Contenido principal -->
+        <div class="main-content">
+            <!-- Formulario para agregar dispositivos -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Agregar nuevo dispositivo</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre</label>
+                                {{ form.nombre }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Tipo</label>
+                                {{ form.tipo }}
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-plus-circle"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Descripción</label>
+                                {{ form.descripcion }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Ubicación</label>
+                                {{ form.ubicacion }}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Dirección IP</label>
+                                {{ form.ip_address }}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Listado de dispositivos -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Tus Dispositivos</h5>
+                    <span class="badge bg-primary">{{ dispositivos.count }} dispositivos</span>
+                </div>
+                <div class="card-body">
+                    {% if dispositivos %}
+                    <div class="devices-grid">
+                        {% for dispositivo in dispositivos %}
+                        <div class="device-card" data-device-id="{{ dispositivo.id }}" onclick="showDeviceDetails({{ dispositivo.id }})">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">{{ dispositivo.nombre }}</h6>
+                                <span class="badge bg-{% if dispositivo.estado %}success{% else %}danger{% endif %}">
+                                    {% if dispositivo.estado %}Activo{% else %}Inactivo{% endif %}
+                                </span>
+                            </div>
+                            <p class="text-muted small mb-2">{{ dispositivo.get_tipo_display }}</p>
+                            <p class="small text-truncate mb-1" title="{{ dispositivo.descripcion|default:'Sin descripción' }}">
+                                <i class="bi bi-card-text"></i> {{ dispositivo.descripcion|default:"Sin descripción"|truncatechars:30 }}
+                            </p>
+                            <p class="small mb-1"><i class="bi bi-geo-alt"></i> {{ dispositivo.ubicacion|default:"Sin ubicación" }}</p>
+                            <div class="d-flex gap-2 mt-2">
+                                <button onclick="event.stopPropagation(); toggleDevice({{ dispositivo.id }})" 
+                                        class="btn btn-sm btn-{% if dispositivo.estado %}warning{% else %}success{% endif %}">
+                                    {% if dispositivo.estado %}Desactivar{% else %}Activar{% endif %}
+                                </button>
+                                <a href="{% url 'eliminar_dispositivo' dispositivo.id %}" 
+                                   class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro?')">
+                                    Eliminar
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-devices" style="font-size: 3rem; color: #6c757d;"></i>
+                        <p class="mt-3">No tienes dispositivos registrados</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel derecho - Gráfica -->
+        <div class="graph-container">
+            <h5 class="mb-4">Estadísticas</h5>
+            <div style="height: 250px;">
+                <canvas id="deviceChart"></canvas>
+            </div>
+            <div class="mt-4">
+                <h6>Resumen</h6>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Total dispositivos
+                        <span class="badge bg-primary rounded-pill">{{ dispositivos.count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Activos
+                        <span class="badge bg-success rounded-pill">{{ activos }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Inactivos
+                        <span class="badge bg-danger rounded-pill">{{ inactivos }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para el chat con Gemini -->
+    <div class="modal fade" id="geminiModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chat con Gemini</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="chat-container" style="height: 400px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; padding: 10px; border-radius: 5px; background: #f9f9f9;"></div>
+                    <div class="input-group">
+                        <input type="text" id="user-input" class="form-control" placeholder="Escribe tu pregunta...">
+                        <button class="btn btn-primary" onclick="sendMessage()">
+                            <i class="bi bi-send"></i> Enviar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para detalles del dispositivo -->
+    <div class="modal fade" id="dispositivoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles del Dispositivo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="dispositivoModalBody">
+                    <!-- Contenido dinámico -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="toggleDeviceBtn">
+                        <span id="toggleButtonText">Activar/Desactivar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Variables globales
+        let currentDeviceId = null;
+        const dispositivoModal = new bootstrap.Modal(document.getElementById('dispositivoModal'));
+        const geminiModal = new bootstrap.Modal(document.getElementById('geminiModal'));
+
+        // Configuración de la gráfica
+        function initChart() {
+            const ctx = document.getElementById('deviceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Activos', 'Inactivos'],
+                    datasets: [{
+                        data: [{{ activos }}, {{ inactivos }}],
+                        backgroundColor: ['#4bc0c0', '#ff6384'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Mostrar detalles del dispositivo
+        async function showDeviceDetails(deviceId) {
+            currentDeviceId = deviceId;
+            document.getElementById('dispositivoModalBody').innerHTML = `
+                <div class="text-center my-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>`;
+            
+            try {
+                const response = await fetch(`/dispositivo/${deviceId}/`);
+                const data = await response.json();
+                
+                document.getElementById('dispositivoModalBody').innerHTML = `
+                    <div class="mb-3">
+                        <h6>Nombre</h6>
+                        <p>${data.nombre}</p>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>Tipo</h6>
+                            <p>${data.tipo}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Estado</h6>
+                            <p><span class="badge bg-${data.estado === 'Activo' ? 'success' : 'danger'}">${data.estado}</span></p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <h6>Descripción</h6>
+                        <p>${data.descripcion || 'No especificada'}</p>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>Ubicación</h6>
+                            <p>${data.ubicacion || 'No especificada'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>IP</h6>
+                            <p>${data.ip_address || 'No especificada'}</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Creado</h6>
+                            <p>${data.fecha_creacion}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Actualizado</h6>
+                            <p>${data.ultima_actualizacion}</p>
+                        </div>
+                    </div>`;
+                
+                // Configurar botón de toggle
+                document.getElementById('toggleButtonText').textContent = 
+                    data.estado === 'Activo' ? 'Desactivar' : 'Activar';
+                document.getElementById('toggleDeviceBtn').onclick = () => toggleDevice(deviceId);
+                
+                dispositivoModal.show();
+            } catch (error) {
+                document.getElementById('dispositivoModalBody').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error al cargar los detalles del dispositivo.
+                    </div>`;
+                dispositivoModal.show();
+            }
+        }
+
+        // Alternar estado del dispositivo
+        async function toggleDevice(deviceId) {
+            try {
+                const response = await fetch(`/toggle-device/${deviceId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Chat con Gemini (simulado)
+        function sendMessage() {
+            const input = document.getElementById('user-input');
+            const chat = document.getElementById('chat-container');
+            
+            if (!input.value.trim()) return;
+            
+            // Mensaje del usuario
+            chat.innerHTML += `
+                <div class="d-flex justify-content-end mb-2">
+                    <div class="bg-primary text-white p-2 rounded" style="max-width: 80%">
+                        ${input.value}
+                    </div>
+                </div>`;
+            
+            // Simular respuesta
+            setTimeout(() => {
+                chat.innerHTML += `
+                    <div class="d-flex justify-content-start mb-2">
+                        <div class="bg-light p-2 rounded" style="max-width: 80%">
+                            <strong>Gemini:</strong> Respuesta simulada para "${input.value}"
+                        </div>
+                    </div>`;
+                chat.scrollTop = chat.scrollHeight;
+            }, 1000);
+            
+            input.value = '';
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            
+            // Permitir enviar mensaje con Enter
+            document.getElementById('user-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+        });
+    </script>
+</body>
+</html>
