@@ -72,7 +72,13 @@
                 <button class="btn btn-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#geminiModal">
                     <i class="bi bi-chat-left-text"></i> Chat con Gemini
                 </button>
-                <form method="post" action="{% url 'logout' %}" class="d-inline">
+                <form method="POST" action="{% url 'chart' %}" class="d-inline">  <!-- Clase "d-inline" para que no ocupe todo el ancho -->
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                         Ir a calculadora
+                    </button>
+                </form>
+                <form method="post" action="{% url 'logout' %}" class="d-inline">  <!-- Clase "d-inline" para que no ocupe todo el ancho -->
                     {% csrf_token %}
                     <button type="submit" class="btn btn-outline-danger w-100">
                         <i class="bi bi-box-arrow-right"></i> Cerrar sesión
