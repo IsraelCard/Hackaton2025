@@ -9,7 +9,7 @@ class CustomUserCreationForm(UserCreationForm):
 class DispositivoForm(forms.ModelForm):
     class Meta:
         model = Dispositivo
-        fields = ['nombre', 'tipo', 'descripcion', 'ubicacion', 'ip_address']
+        fields = ['nombre', 'tipo', 'descripcion', 'ubicacion', 'ip_address','consumo']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'tipo': forms.Select(attrs={'class': 'form-control'}),
@@ -24,3 +24,5 @@ class RegistroForm(UserCreationForm):
         'password_common': 'Esta contraseña es demasiado común.',
         'password_entirely_numeric': 'La contraseña no puede ser completamente numérica.',
     }
+            'consumo': forms.NumberInput(attrs={'class': 'form-control'})
+        }
