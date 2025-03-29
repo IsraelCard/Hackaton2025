@@ -87,3 +87,11 @@ def dispositivo_detalle(request, dispositivo_id):
         'ultima_actualizacion': dispositivo.ultima_actualizacion.strftime("%d/%m/%Y %H:%M"),
     }
     return JsonResponse(data)
+
+@login_required
+def chart_view(request):
+    data = {
+        "labels": ["Enero", "Febrero", "Marzo", "Abril"],
+        "values": [10, 20, 30, 40],
+    }
+    return render(request, "calculadora.html", {"data": data})
