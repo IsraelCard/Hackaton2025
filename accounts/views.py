@@ -12,11 +12,10 @@ import google.generativeai as genai
 import json
 from dotenv import load_dotenv
 
-load_dotenv()  # Load environment variables
-
 def post_list(request):
     if request.method == "POST":
         user_input = request.POST.get('user_input')
+        load_dotenv() 
 
         GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
         if not GEMINI_API_KEY:
