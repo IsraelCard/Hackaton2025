@@ -111,6 +111,10 @@
                                 {{ form.ubicacion }}
                             </div>
                             <div class="col-md-3">
+                                <label class="form-label">Consumo</label>
+                                {{ form.consumo }} W
+                            </div>
+                            <div class="col-md-3">
                                 <label class="form-label">Dirección IP</label>
                                 {{ form.ip_address }}
                             </div>
@@ -307,6 +311,10 @@
                             <p>${data.ubicacion || 'No especificada'}</p>
                         </div>
                         <div class="col-md-6">
+                            <h6>Consumo</h6>
+                            <p>${data.consumo || 'No especificada'} W</p>
+                        </div>
+                        <div class="col-md-6">
                             <h6>IP</h6>
                             <p>${data.ip_address || 'No especificada'}</p>
                         </div>
@@ -314,11 +322,11 @@
                     <div class="row">
                         <div class="col-md-6">
                             <h6>Creado</h6>
-                            <p>${data.fecha_creacion}</p>
+                            <p>${data.fecha_creacion} UTC</p>
                         </div>
                         <div class="col-md-6">
                             <h6>Actualizado</h6>
-                            <p>${data.ultima_actualizacion}</p>
+                            <p>${data.ultima_actualizacion} UTC</p>
                         </div>
                     </div>`;
                 

@@ -9,11 +9,12 @@ class CustomUserCreationForm(UserCreationForm):
 class DispositivoForm(forms.ModelForm):
     class Meta:
         model = Dispositivo
-        fields = ['nombre', 'tipo', 'descripcion', 'ubicacion', 'ip_address']
+        fields = ['nombre', 'tipo', 'descripcion', 'ubicacion', 'ip_address','consumo']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'tipo': forms.Select(attrs={'class': 'form-control'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'ubicacion': forms.TextInput(attrs={'class': 'form-control'}),
             'ip_address': forms.TextInput(attrs={'class': 'form-control'}),
+            'consumo': forms.NumberInput(attrs={'class': 'form-control'})
         }
