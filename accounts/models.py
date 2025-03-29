@@ -4,8 +4,10 @@ from django.contrib.auth.models import User
 class Dispositivo(models.Model):
     TIPO_CHOICES = [
         ('sensor', 'Sensor'),
-        ('actuador', 'Actuador'),
+        ('electronico', 'Electrónico'),
         ('camara', 'Cámara'),
+        ('foco','Foco/iluminacion'),
+        ('electrodomestico','Electrodoméstio'),
         ('otros', 'Otros'),
     ]
     
@@ -18,6 +20,13 @@ class Dispositivo(models.Model):
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     ultima_actualizacion = models.DateTimeField(auto_now=True)
     ip_address = models.CharField(max_length=15, blank=True, null=True)
+    consumo = models.IntegerField(null=True,default=0)
 
     def __str__(self):
-        return f"{self.nombre} ({self.get_tipo_display()})"
+        return f"{self.nombre}"
+    
+class Registro(models.Model):
+    idDispositivo = models.ForeignKey(Dispositivo, on_delete=models.CASCADE)
+    fechaRegistro = models.DateTimeField(auto_now=False)
+    consumo = models.DecimalField(max_digits=6,decimal_places=2)
+    

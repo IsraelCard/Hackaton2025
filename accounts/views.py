@@ -79,6 +79,7 @@ def dispositivo_detalle(request, dispositivo_id):
         'nombre': dispositivo.nombre,
         'tipo': dispositivo.get_tipo_display(),
         'estado': 'Activo' if dispositivo.estado else 'Inactivo',
+        'consumo': dispositivo.consumo,
         'descripcion': dispositivo.descripcion,
         'ubicacion': dispositivo.ubicacion,
         'ip_address': dispositivo.ip_address,
