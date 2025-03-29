@@ -17,3 +17,10 @@ class DispositivoForm(forms.ModelForm):
             'ubicacion': forms.TextInput(attrs={'class': 'form-control'}),
             'ip_address': forms.TextInput(attrs={'class': 'form-control'}),
         }
+class RegistroForm(UserCreationForm):
+    error_messages = {
+        'password_mismatch': 'Las contraseñas no coinciden.',
+        'password_too_short': 'La contraseña debe contener al menos %(min_length)d caracteres.',
+        'password_common': 'Esta contraseña es demasiado común.',
+        'password_entirely_numeric': 'La contraseña no puede ser completamente numérica.',
+    }
