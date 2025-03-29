@@ -28,5 +28,5 @@ class Dispositivo(models.Model):
 class Registro(models.Model):
     idDispositivo = models.ForeignKey(Dispositivo, on_delete=models.CASCADE)
     fechaRegistro = models.DateTimeField(auto_now=False)
-    consumo = models.DecimalField(max_digits=6,decimal_places=2)
+    consumo = models.IntegerField(default=0,max_length=4)
     
