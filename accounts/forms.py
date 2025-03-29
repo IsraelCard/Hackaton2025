@@ -16,6 +16,7 @@ class DispositivoForm(forms.ModelForm):
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'ubicacion': forms.TextInput(attrs={'class': 'form-control'}),
             'ip_address': forms.TextInput(attrs={'class': 'form-control'}),
+            'consumo': forms.NumberInput(attrs={'class': 'form-control'})
         }
 class RegistroForm(UserCreationForm):
     error_messages = {
@@ -24,5 +25,4 @@ class RegistroForm(UserCreationForm):
         'password_common': 'Esta contraseña es demasiado común.',
         'password_entirely_numeric': 'La contraseña no puede ser completamente numérica.',
     }
-            'consumo': forms.NumberInput(attrs={'class': 'form-control'})
-        }
+            
