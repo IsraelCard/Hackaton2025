@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Dispositivos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         .dashboard {
             display: grid;
@@ -70,9 +72,12 @@
                 <button class="btn btn-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#geminiModal">
                     <i class="bi bi-chat-left-text"></i> Chat con Gemini
                 </button>
-                <a href="{% url 'logout' %}" class="btn btn-outline-danger w-100">
-                    <i class="bi bi-box-arrow-right"></i> Cerrar sesión
-                </a>
+                <form method="post" action="{% url 'logout' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                    </button>
+                </form>
             </div>
         </div>
 
@@ -203,13 +208,16 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="chat-container" style="height: 400px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; padding: 10px; border-radius: 5px; background: #f9f9f9;"></div>
-                    <div class="input-group">
-                        <input type="text" id="user-input" class="form-control" placeholder="Escribe tu pregunta...">
-                        <button class="btn btn-primary" onclick="sendMessage()">
-                            <i class="bi bi-send"></i> Enviar
-                        </button>
-                    </div>
+                    <form id="geminiForm" method="POST">
+                        {% csrf_token %}
+                        <div id="chat-container" style="height: 400px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; padding: 10px; border-radius: 5px; background: #f9f9f9;"></div>
+                        <div class="input-group">
+                            <input type="text" id="user-input" name="user_input" class="form-control" placeholder="Escribe tu pregunta...">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Enviar
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -236,8 +244,6 @@
         </div>
     </div>
 
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -271,6 +277,62 @@
                 }
             });
         }
+
+        // Chat con Gemini
+        $(document).ready(function(){
+            $('#geminiForm').submit(function(e){
+                e.preventDefault();
+                const userInput = $('#user-input').val();
+                const chatContainer = $('#chat-container');
+                
+                if (!userInput.trim()) return;
+                
+                // Mostrar mensaje del usuario
+                chatContainer.append(`
+                    <div class="d-flex justify-content-end mb-2">
+                        <div class="bg-primary text-white p-2 rounded" style="max-width: 80%">
+                            ${userInput}
+                        </div>
+                    </div>
+                `);
+                
+                // Limpiar campo
+                $('#user-input').val('');
+                chatContainer.scrollTop(chatContainer[0].scrollHeight);
+                
+                // Enviar solicitud AJAX
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'post_list' %}",
+                    data: {
+                        'user_input': userInput,
+                        'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        chatContainer.append(`
+                            <div class="d-flex justify-content-start mb-2">
+                                <div class="bg-light p-2 rounded" style="max-width: 80%">
+                                    <strong>Gemini:</strong> ${data.result}
+                                </div>
+                            </div>
+                        `);
+                        chatContainer.scrollTop(chatContainer[0].scrollHeight);
+                    },
+                    error: function(xhr) {
+                        const errorMessage = xhr.responseJSON?.error || "Error en la solicitud";
+                        chatContainer.append(`
+                            <div class="d-flex justify-content-start mb-2">
+                                <div class="bg-danger text-white p-2 rounded" style="max-width: 80%">
+                                    ${errorMessage}
+                                </div>
+                            </div>
+                        `);
+                        chatContainer.scrollTop(chatContainer[0].scrollHeight);
+                    }
+                });
+            });
+        });
 
         // Mostrar detalles del dispositivo
         async function showDeviceDetails(deviceId) {
@@ -330,7 +392,6 @@
                         </div>
                     </div>`;
                 
-                // Configurar botón de toggle
                 document.getElementById('toggleButtonText').textContent = 
                     data.estado === 'Activo' ? 'Desactivar' : 'Activar';
                 document.getElementById('toggleDeviceBtn').onclick = () => toggleDevice(deviceId);
@@ -364,43 +425,16 @@
             }
         }
 
-        // Chat con Gemini (simulado)
-        function sendMessage() {
-            const input = document.getElementById('user-input');
-            const chat = document.getElementById('chat-container');
-            
-            if (!input.value.trim()) return;
-            
-            // Mensaje del usuario
-            chat.innerHTML += `
-                <div class="d-flex justify-content-end mb-2">
-                    <div class="bg-primary text-white p-2 rounded" style="max-width: 80%">
-                        ${input.value}
-                    </div>
-                </div>`;
-            
-            // Simular respuesta
-            setTimeout(() => {
-                chat.innerHTML += `
-                    <div class="d-flex justify-content-start mb-2">
-                        <div class="bg-light p-2 rounded" style="max-width: 80%">
-                            <strong>Gemini:</strong> Respuesta simulada para "${input.value}"
-                        </div>
-                    </div>`;
-                chat.scrollTop = chat.scrollHeight;
-            }, 1000);
-            
-            input.value = '';
-            chat.scrollTop = chat.scrollHeight;
-        }
-
         // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
             initChart();
             
             // Permitir enviar mensaje con Enter
             document.getElementById('user-input').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendMessage();
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    $('#geminiForm').submit();
+                }
             });
         });
     </script>
