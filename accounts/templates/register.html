@@ -1,15 +1,189 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Registro</title>
+    <meta charset="UTF-8">
+    <meta 
+        name="viewport" 
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>Registro de Usuario</title>
+    <link 
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
+        rel="stylesheet"
+    >
+    <style>
+        /* ===== Estilos Generales ===== */
+        body {
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        /* ===== Tarjeta de Registro ===== */
+        .register-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        /* Encabezado */
+        .register-header {
+            background: #f8f9fa;
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .register-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bi-person-plus {
+            font-size: 4rem;
+            color: #6c757d;
+        }
+
+        /* Cuerpo del Formulario */
+        .register-body {
+            padding: 2rem;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        /* Mensajes de Error */
+        .text-danger small {
+            font-size: 0.85em;
+            display: block;
+            margin-top: 0.25rem;
+        }
+    </style>
+    <link 
+        rel="stylesheet" 
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+    >
 </head>
 <body>
-    <h2>Registro</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Registrarse</button>
-    </form>
-    <p>¿Ya tienes una cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a></p>
+    <!-- Contenedor Principal -->
+    <div class="container">
+        <div class="register-card">
+            
+            <!-- Encabezado -->
+            <div class="register-header">
+                <div class="register-avatar">
+                    <i class="bi bi-person-plus"></i>
+                </div>
+                <h3 class="mb-1">Crear Cuenta</h3>
+                <p class="text-muted">Comienza a gestionar tus dispositivos</p>
+            </div>
+
+            <!-- Formulario de Registro -->
+            <div class="register-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- Errores Generales -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Campos del Formulario -->
+                    <div class="row g-3">
+                        {% for field in form %}
+                            <div class="col-md-{% if field.name == 'username' %}12{% else %}6{% endif %}">
+                                
+                                <!-- Etiqueta del Campo -->
+                                <label class="form-label">
+                                    {% if field.name == 'username' %}
+                                        Nombre de usuario
+                                    {% elif field.name == 'password1' %}
+                                        Contraseña
+                                    {% elif field.name == 'password2' %}
+                                        Confirmar contraseña
+                                    {% else %}
+                                        {{ field.label }}
+                                    {% endif %}
+                                </label>
+
+                                <!-- Input del Campo -->
+                                {{ field }}
+
+                                <!-- Mensajes de Error -->
+                                {% if field.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in field.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                <!-- Texto de Ayuda -->
+                                {% if field.help_text %}
+                                    <small class="form-text text-muted">
+                                        {% if field.name == 'password1' %}
+                                            • Mínimo 8 caracteres<br>
+                                            • No similar a tu usuario<br>
+                                            • Contener números y letras
+                                        {% elif field.name == 'password2' %}
+                                            Repite la contraseña para verificación
+                                        {% else %}
+                                            {{ field.help_text }}
+                                        {% endif %}
+                                    </small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Botón de Registro -->
+                    <button 
+                        type="submit" 
+                        class="btn btn-primary btn-register mt-4 shadow-sm"
+                    >
+                        <i class="bi bi-person-check"></i> Registrarse
+                    </button>
+
+                    <!-- Enlace a Login -->
+                    <div class="text-center mt-4">
+                        <p class="text-muted mb-0">¿Ya tienes una cuenta?</p>
+                        <a 
+                            href="{% url 'login' %}" 
+                            class="btn btn-outline-primary btn-sm mt-2"
+                        >
+                            <i class="bi bi-box-arrow-in-right"></i> Ir a Inicio de Sesión
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
