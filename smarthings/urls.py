@@ -12,4 +12,6 @@ urlpatterns = [
     path('eliminar-dispositivo/<int:dispositivo_id>/', views.eliminar_dispositivo, name='eliminar_dispositivo'),
     path('toggle-device/<int:device_id>/', views.toggle_device, name='toggle_device'),
     path('dispositivo/<int:dispositivo_id>/', views.dispositivo_detalle, name='dispositivo_detalle'),
+    path('gemini_chat/', views.post_list, name='post_list'),
+    path('calculadora/', views.chart_view, name='chart')
 ]
